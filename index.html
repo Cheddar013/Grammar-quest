@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar Quest: 3 VWO English - Ultimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-full flex bg-slate-950 text-white">
+
+    <!-- LEFT PANE: Play Area -->
+    <main class="flex-1 flex flex-col h-full bg-slate-900 border-r border-slate-800 relative">
+        
+        <!-- TOP HUD -->
+        <header class="w-full p-4 flex items-center justify-between bg-slate-950 border-b border-slate-800 z-10 shrink-0">
+            <div class="flex items-center gap-4">
+                <div>
+                    <h1 class="font-game text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-none">Grammar Quest</h1>
+                    <span id="hud-level-name" class="text-xs text-cyan-300/80 font-semibold uppercase tracking-wider">Lvl 1: Present Simple vs Continuous</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6 bg-slate-900 px-5 py-2 rounded-2xl border border-slate-800">
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">Hero HP</span>
+                    <div id="hud-lives" class="flex gap-1 text-sm tracking-widest"></div>
+                </div>
+                <div class="w-px h-8 bg-slate-800"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-amber-400 font-bold uppercase">XP Score</span>
+                    <span id="hud-score" class="font-game text-lg font-bold text-amber-300">0</span>
+                </div>
+                <div class="w-px h-8 bg-slate-800"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] text-cyan-400 font-bold uppercase">Streak</span>
+                    <span id="hud-streak" class="font-game text-lg font-bold text-cyan-300">0</span>
+                </div>
+            </div>
+           
+            <button onclick="toggleAudio()" id="audio-btn" class="bg-slate-800 p-2 rounded-xl border border-slate-700 hover:bg-slate-700 transition">🔊</button>
+        </header>
+
+        <!-- CANVAS ARENA -->
+        <div class="w-full relative shrink-0 border-b border-cyan-900/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+            <canvas id="game-canvas" width="1000" height="320" class="w-full h-[280px] object-cover bg-slate-950"></canvas>
+           
+            <!-- Floating Timer -->
+            <div id="boss-timer" class="hidden absolute top-4 right-4 bg-red-950/80 border border-red-500/50 text-red-400 px-4 py-1.5 rounded-full font-mono font-bold items-center gap-2 pulse-shield">
+               ⏱️ <span id="timer-text">20s</span>
+            </div>
+        </div>
+
+        <!-- QUESTION & INTERACTION AREA -->
+        <div class="flex-1 flex flex-col p-6 overflow-y-auto relative">
+           
+            <div class="flex justify-between items-end mb-4">
+                <div class="flex flex-col">
+                    <span id="q-progress" class="text-xs font-bold text-cyan-500 uppercase tracking-wider mb-1">Enemy HP: 3 / 3</span>
+                    <h2 id="q-text" class="font-game text-2xl text-slate-100 leading-snug max-w-3xl">Loading your quest...</h2>
+                </div>
+               
+                <!-- Lifelines -->
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="useLifeline('hint')" id="ll-hint" class="bg-indigo-950 hover:bg-indigo-900 border border-indigo-500/30 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                        💡 Hint (<span id="cnt-hint">1</span>)
+                    </button>
+                    <button onclick="useLifeline('shield')" id="ll-shield" class="bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/30 text-cyan-300 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                        🛡️ Shield (<span id="cnt-shield">1</span>)
+                    </button>
+                    <button onclick="useLifeline('freeze')" id="ll-freeze" class="bg-blue-950 hover:bg-blue-900 border border-blue-500/30 text-blue-300 px-3 py-1.5 rounded-lg text-xs font-bold transition opacity-50 pointer-events-none">
+                        ❄️ Freeze (<span id="cnt-freeze">1</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- TEXT INPUT CONTAINER -->
+            <div id="input-container" class="mt-2 flex flex-col gap-3">
+                <form onsubmit="submitTypedAnswer(event)" class="flex gap-3">
+                    <input type="text" id="user-answer-input" placeholder="Type de volledige werkwoordsvorm (bijv. 'has broken', 'is breaking')..." autocomplete="off" spellcheck="false"
+                        class="flex-1 bg-slate-950 border-2 border-slate-700 focus:border-cyan-400 focus:outline-none text-slate-100 px-5 py-3.5 rounded-xl font-medium text-lg transition placeholder:text-slate-600 shadow-inner">
+                    <button type="submit" id="submit-ans-btn" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold px-8 py-3.5 rounded-xl btn-arcade text-lg shrink-0">
+                        Aanvallen ⚔️
+                    </button>
+                </form>
+                <div id="hint-display" class="hidden text-xs text-indigo-300 bg-indigo-950/50 border border-indigo-500/30 px-3 py-2 rounded-lg font-mono"></div>
+            </div>
+
+            <!-- Explanation Box -->
+            <div id="explanation-box" class="hidden mt-6 bg-slate-800/80 border border-slate-700 rounded-xl p-5 flex-col gap-3 fade-in">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 id="exp-title" class="font-game text-lg font-bold">Explanation</h3>
+                        <p id="exp-text" class="text-sm text-slate-300 mt-1">Details...</p>
+                    </div>
+                    <button id="next-btn" onclick="continueQuest()" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-6 py-2 rounded-xl btn-arcade shrink-0 ml-4">
+                        Next ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="w-80 bg-slate-950 border-l border-slate-800 flex flex-col h-full shrink-0">
+        <div class="flex text-[11px] font-bold uppercase tracking-wider border-b border-slate-800 shrink-0">
+            <button onclick="switchTab('rules')" id="tab-btn-rules" class="flex-1 py-3.5 tab-active transition">📖 Rules</button>
+            <button onclick="switchTab('stats')" id="tab-btn-stats" class="flex-1 py-3.5 tab-inactive transition">📊 Stats</button>
+            <button onclick="switchTab('log')" id="tab-btn-log" class="flex-1 py-3.5 tab-inactive transition">📜 Log</button>
+            <button onclick="switchTab('skins')" id="tab-btn-skins" class="flex-1 py-3.5 tab-inactive transition">🛡️ Skins</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-5 text-sm">
+            <!-- RULES TAB -->
+            <div id="tab-rules" class="space-y-4">
+                <h3 class="font-game text-lg text-amber-300 border-b border-amber-500/20 pb-2">Grammar Grimoire</h3>
+                <div id="rules-content" class="text-slate-300 space-y-3 leading-relaxed"></div>
+            </div>
+
+            <!-- STATS TAB -->
+            <div id="tab-stats" class="hidden space-y-4">
+                <h3 class="font-game text-lg text-cyan-300 border-b border-cyan-500/20 pb-2">Quest Statistics</h3>
+                <div class="space-y-3 bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <div class="flex justify-between"><span class="text-slate-400">Total Questions:</span> <span id="stat-total" class="font-bold">0</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Correct Answers:</span> <span id="stat-correct" class="font-bold text-emerald-400">0</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Accuracy:</span> <span id="stat-acc" class="font-bold text-amber-300">0%</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">High Score:</span> <span id="stat-high" class="font-bold text-cyan-300">0</span></div>
+                </div>
+                <div class="mt-4">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Realm Map</h4>
+                    <div id="realm-map" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- LOG TAB -->
+            <div id="tab-log" class="hidden space-y-3">
+                <h3 class="font-game text-lg text-purple-300 border-b border-purple-500/20 pb-2">Adventure Log</h3>
+                <div id="log-content" class="space-y-3">
+                    <p class="text-slate-500 italic text-xs">Your answered questions will appear here.</p>
+                </div>
+            </div>
+
+            <!-- SKINS TAB -->
+            <div id="tab-skins" class="hidden space-y-4">
+                <h3 class="font-game text-lg text-emerald-300 border-b border-emerald-500/20 pb-2">Hero Skins</h3>
+                <p class="text-xs text-slate-400">Versla Le Livre Maudit (Boss Level 4) om 2 nieuwe Hero Skins te ontgrendelen!</p>
+                <div id="skins-list" class="space-y-3"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MODALS -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm hidden flex-col items-center justify-center z-50 p-4">
+        <div id="modal-level-clear" class="hidden bg-slate-900 border border-cyan-500/50 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="text-5xl mb-4">🏆</div>
+            <h2 class="font-game text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 mb-2">Enemy Defeated!</h2>
+            <p id="level-clear-desc" class="text-slate-300 text-sm mb-6">You've mastered this grammar stage.</p>
+            <button onclick="startNextLevel()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl btn-arcade">
+                Proceed to Next Level ➔
+            </button>
+        </div>
+
+        <div id="modal-game-over" class="hidden bg-slate-900 border border-red-500/50 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="text-5xl mb-4">💀</div>
+            <h2 class="font-game text-3xl font-bold text-red-500 mb-2">Quest Failed!</h2>
+            <p class="text-slate-300 text-sm mb-6">You ran out of Health Points. Review your rules and try again.</p>
+            <div class="bg-slate-950 p-3 rounded-lg mb-6 flex justify-between text-sm">
+                <span class="text-slate-400">Final Score:</span>
+                <span id="go-score" class="font-bold text-amber-400">0</span>
+            </div>
+            <button onclick="initGame()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl btn-arcade">
+                Restart Adventure 🔄
+            </button>
+        </div>
+
+        <div id="modal-victory" class="hidden bg-slate-900 border border-amber-500/50 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="text-6xl mb-4">👑</div>
+            <h2 class="font-game text-3xl font-bold text-amber-400 mb-2">Grand Champion!</h2>
+            <p class="text-slate-300 text-sm mb-3">You defeated the Boss and mastered 3 VWO English Grammar!</p>
+            <div class="bg-gradient-to-r from-amber-500/20 to-emerald-500/20 border border-amber-400/50 rounded-xl p-3 mb-4 text-emerald-300 text-xs font-bold leading-relaxed">
+                🎉 2 Nieuwe Hero Skins Ontgrendeld!<br>
+                <span class="text-cyan-300">🛡️ Cyber Knight</span> & <span class="text-amber-300">👑 Golden Warrior</span>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-lg mb-6 flex flex-col gap-2 text-sm">
+                <div class="flex justify-between"><span class="text-slate-400">Total Score:</span><span id="vic-score" class="font-bold text-amber-400">0</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Accuracy:</span><span id="vic-acc" class="font-bold text-cyan-400">0%</span></div>
+            </div>
+            <button onclick="initGame()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold py-3 rounded-xl btn-arcade">
+                Play Again 🚀
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
